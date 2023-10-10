@@ -1,0 +1,581 @@
+# 1. Figure VII-1: Monthly New Criminal Cases by Charge Level
+library(dplyr)
+
+# Import file
+library(readxl)
+Monthly_New_Criminal_Cases <- read_excel("NEW_CRIM_CHARGES_OVERALL_BYMTH.xlsx")
+
+# Merge separate month and year columns into date-valued column, convert correctly to date values
+#Monthly_New_Criminal_Cases$Date <- with(Monthly_New_Criminal_Cases,
+#                                        sprintf("%d-%02d", YEAR_PRETRIAL_START_DATE, MTH_PRETRIAL_START_DATE))
+#Monthly_New_Criminal_Cases$Date <- zoo::as.yearmon(paste(Monthly_New_Criminal_Cases$YEAR_PRETRIAL_START_DATE,
+#                                                   Monthly_New_Criminal_Cases$MTH_PRETRIAL_START_DATE), "%Y %m")
+#Monthly_New_Criminal_Cases$Date <- as.Date(paste(Monthly_New_Criminal_Cases$YEAR_PRETRIAL_START_DATE
+#                                                 , Monthly_New_Criminal_Cases$MTH_PRETRIAL_START_DATE
+#                                                 , sep = "."
+#                                                 )
+#                                                  , format = "%y.%m" )
+Monthly_New_Criminal_Cases$Date = as.Date(paste(Monthly_New_Criminal_Cases$YEAR_PRETRIAL_START_DATE
+                                                , Monthly_New_Criminal_Cases$MTH_PRETRIAL_START_DATE
+                                                , 01)
+                                                , "%Y %m %d")
+
+# Gather data into long form before using graph.
+library(tidyverse)
+Figure_VII_1 <- Monthly_New_Criminal_Cases %>%
+  select(Date, Felony_Cases, Misdemeanor_Cases) %>%
+  gather(key = "Case_Type", value = "value", -Date)
+
+# Modify row names for display.
+Figure_VII_1 <- dplyr::mutate(Figure_VII_1, Case_Type = case_when(
+  Case_Type == "Felony_Cases" ~ "Felony Cases",
+  Case_Type == "Misdemeanor_Cases" ~ "Misdemeanor Cases",
+  TRUE ~ Case_Type
+  )
+)
+
+# Line graph
+library(ggplot2)
+library(ggthemes)
+theme_set(theme_classic())
+figure_vii_1 <- ggplot(Figure_VII_1, aes(x = Date, y = value, color = Case_Type)) +
+  geom_line(lwd=1.5) +
+  # theme_economist_white() + scale_fill_economist() +
+  theme(
+    title = element_text(face="bold", size=18, color="black"),
+    axis.ticks.x=element_blank(),
+    axis.ticks.y=element_blank(),
+    ## panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+    axis.text.x = element_text(angle = 90
+                               #, vjust = 1
+                               ),
+    axis.text = element_text(size = 14, color = "black"),
+    # axis.title = element_text(face="bold", hjust = 0.5, size = 18, color = "black")
+    axis.title = element_blank(),
+    legend.title = element_blank(),
+    legend.text = element_text(face="bold", size = 14, color = "black"),
+    legend.position = "bottom"
+  ) +
+  scale_x_date(date_breaks = '3 month'
+               , date_labels = "%b-%y", #%b formats the date into lettered-month abbreviation format
+               ) +
+  scale_y_continuous(labels=function(x) format(x, big.mark = ",", decimal.mark = ".", scientific = FALSE)) 
+  # +
+  # Create dashed vertical line to mark different pandemic periods
+  # geom_vline(xintercept = as.numeric(as.Date("2020-03-01")), 
+             #linetype=4,
+             #col = "dark blue") +
+  #geom_vline(xintercept = as.numeric(as.Date("2021-03-01")), 
+             #linetype=4,
+             #col = "dark blue") +
+  #annotate("text", x = as.Date("2019-03-01"), y = 11500, label = "Pre-pandemic",
+           #size = 6, color = "dark blue") +
+  #annotate("text", x = as.Date("2020-09-01"), y = 11500, label = "Year 1 after \n pandemic onset",
+           #size = 6, color = "dark blue") +
+  #annotate("text", x = as.Date("2021-10-01"), y = 11500, label = "Year 2 after \n pandemic onset",
+           #size = 6, color = "dark blue")
+
+ggsave('figure_vii_1.svg', figure_vii_1, device = "svg",
+      width = 465, height = 225, units = 'mm',
+       dpi = 1080)
+
+# 1B. : Monthly New Criminal Cases by AJIS Charge Level, AJIS Only
+library(dplyr)
+
+# Import file
+library(readxl)
+AJIS_ARRESTS_MONTHLY <- read_excel("AJIS_ARRESTS_MONTHLY.xlsx")
+
+AJIS_ARRESTS_MONTHLY$Date = as.Date(paste(AJIS_ARRESTS_MONTHLY$Year
+                                          , AJIS_ARRESTS_MONTHLY$Month
+                                          , 01)
+                                    , "%Y %m %d")
+
+AJIS_ARRESTS_MONTHLY_2010 <- dplyr::filter(AJIS_ARRESTS_MONTHLY, Year >= 2020 & Year <= 2022)
+
+# Gather data into long form before using graph.
+library(tidyverse)
+AJIS_ARRESTS_MONTHLY_2010 <- AJIS_ARRESTS_MONTHLY_2010 %>%
+  select(Date, Felony_Bookings, Misdemeanor_Bookings) %>%
+  gather(key = "Case_Type", value = "value", -Date)
+
+# Modify row names for display.
+AJIS_ARRESTS_MONTHLY_2010 <- dplyr::mutate(AJIS_ARRESTS_MONTHLY_2010, Case_Type = case_when(
+  Case_Type == "Felony_Bookings" ~ "Felony Bookings",
+  Case_Type == "Misdemeanor_Bookings" ~ "Misdemeanor Bookings",
+  TRUE ~ Case_Type
+  )
+)
+
+# Line graph
+library(ggplot2)
+library(ggthemes)
+theme_set(theme_classic())
+AJIS_Arrests_Line_Graph <- ggplot(AJIS_ARRESTS_MONTHLY_2010, aes(x = Date, y = value, color = Case_Type)) +
+  geom_line(lwd=1.5) +
+  # theme_economist_white() + scale_fill_economist() +
+  theme(
+    title = element_text(face="bold", size=18, color="black"),
+    axis.ticks.x=element_blank(),
+    axis.ticks.y=element_blank(),
+    ## panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+    axis.text.x = element_text(angle = 90
+                               #, vjust = 1
+    ),
+    axis.text = element_text(size = 14, color = "black"),
+    # axis.title = element_text(face="bold", hjust = 0.5, size = 18, color = "black")
+    axis.title = element_blank(),
+    legend.title = element_blank(),
+    legend.text = element_text(face="bold", size = 14, color = "black"),
+    legend.position = "bottom"
+  ) +
+  scale_x_date(date_breaks = '3 month'
+               , date_labels = "%b-%y", #%b formats the date into lettered-month abbreviation format
+  ) +
+  scale_y_continuous(labels=function(x) format(x, big.mark = ",", decimal.mark = ".", scientific = FALSE)) 
+
+ggsave('AJIS_Arrests_Line_Graph.svg', AJIS_Arrests_Line_Graph, device = "svg",
+       width = 465, height = 225, units = 'mm',
+       dpi = 1080)
+
+# 2. Figure VII-2: Monthly release rates by type of release in LA County
+# Import file
+library(readxl)
+Monthly_Percentage_of_New_Cases_with_Pretrial_Release_by_Type <- read_excel("NEW_CASES_RELEASETYPE_BYMTH.xlsx")
+
+# Filter file for appropriate date range to be shown - from April 2019 until March 2022
+# 5/9/23 - Revised to cover new date range
+Monthly_Percentage_of_New_Cases_with_Pretrial_Release_by_Type <-
+  dplyr::filter(Monthly_Percentage_of_New_Cases_with_Pretrial_Release_by_Type,
+                (Monthly_Percentage_of_New_Cases_with_Pretrial_Release_by_Type$YEAR_PRETRIAL_START_DATE >= 2020 &
+                Monthly_Percentage_of_New_Cases_with_Pretrial_Release_by_Type$YEAR_PRETRIAL_START_DATE <= 2022)
+                |
+                (Monthly_Percentage_of_New_Cases_with_Pretrial_Release_by_Type$YEAR_PRETRIAL_START_DATE == 2023 &
+                Monthly_Percentage_of_New_Cases_with_Pretrial_Release_by_Type$MTH_PRETRIAL_START_DATE <= 4
+                )
+                #|
+                  #(Monthly_Percentage_of_New_Cases_with_Pretrial_Release_by_Type$YEAR_PRETRIAL_START_DATE == 2019 &
+                  #   Monthly_Percentage_of_New_Cases_with_Pretrial_Release_by_Type$MTH_PRETRIAL_START_DATE >= 4
+                  #)
+  )
+
+# Merge separate month and year columns into date-valued column, convert correctly to date values
+Monthly_Percentage_of_New_Cases_with_Pretrial_Release_by_Type$Date <-
+  as.Date(paste(Monthly_Percentage_of_New_Cases_with_Pretrial_Release_by_Type$YEAR_PRETRIAL_START_DATE
+                    , Monthly_Percentage_of_New_Cases_with_Pretrial_Release_by_Type$MTH_PRETRIAL_START_DATE
+                    , 01)
+                    , "%Y %m %d")
+
+# Gather data into long form before using graph.
+library(tidyverse)
+Figure_VII_2A <- Monthly_Percentage_of_New_Cases_with_Pretrial_Release_by_Type %>%
+  select(Date, Percent_Mis_Cite, Percent_Mis_OR, Percent_Mis_Bail_Bond) %>%
+  gather(key = "Release_Type", value = "Percent", -Date)
+
+Figure_VII_2B <- Monthly_Percentage_of_New_Cases_with_Pretrial_Release_by_Type %>%
+  select(Date, Percent_Fel_Cite, Percent_Fel_OR, Percent_Fel_Bail_Bond) %>%
+  gather(key = "Release_Type", value = "Percent", -Date)
+
+# Modify row names for display.
+Figure_VII_2A <- dplyr::mutate(Figure_VII_2A, Release_Type = case_when(
+  Release_Type == "Percent_Mis_Cite" ~ "Cite",
+  Release_Type == "Percent_Mis_OR" ~ "Own Recognizance",
+  Release_Type == "Percent_Mis_Bail_Bond" ~ "Bail/bond",
+  TRUE ~ Release_Type
+  )
+)
+
+Figure_VII_2B <- dplyr::mutate(Figure_VII_2B, Release_Type = case_when(
+  Release_Type == "Percent_Fel_Cite" ~ "Cite",
+  Release_Type == "Percent_Fel_OR" ~ "Own Recognizance",
+  Release_Type == "Percent_Fel_Bail_Bond" ~ "Bail/bond",
+  TRUE ~ Release_Type
+  )
+)
+
+# 2A. Line graph - Monthly Percentage of New Cases with Pretrial Release for Misdemeanor Cases, by Type of Release
+library(ggplot2)
+library(ggthemes)
+dev.off()
+theme_set(theme_classic())
+figure_vii_2A <- ggplot(Figure_VII_2A, aes(x = Date, y = Percent, color = Release_Type)) +
+  geom_line(lwd=1.5) +
+  # theme_economist_white() + scale_fill_economist() +
+  theme(
+    title = element_text(face="bold", size=18, color="black"),
+    axis.ticks.x=element_blank(),
+    axis.ticks.y=element_blank(),
+    ## panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+    axis.text.x = element_text(angle = 90
+                               #, vjust = 1
+    ),
+    axis.text.y = element_text(size = 18, color = "black"),
+    axis.text = element_text(size = 18, color = "black"),
+    # axis.title = element_text(face="bold", hjust = 0.5, size = 18, color = "black")
+    # axis.title = element_blank(),
+    axis.title.x = element_blank(),
+    legend.title = element_blank(),
+    legend.text = element_text(face="bold", size = 18, color = "black"),
+    legend.position = "bottom"
+  ) +
+  scale_x_date(date_breaks = '3 month'
+               , date_labels = "%b-%y", #%b formats the date into lettered-month abbreviation format
+  ) +
+  scale_y_continuous(labels=function(x) format(x, big.mark = ",", decimal.mark = ".", scientific = FALSE)) +
+  #ylab("Percent") +
+  geom_vline(xintercept = as.numeric(as.Date("2021-01-01")), 
+             linetype=4,
+             col = "dark blue") +
+  geom_vline(xintercept = as.numeric(as.Date("2022-01-01")), 
+             linetype=4,
+             col = "dark blue") +
+  annotate("text", x = as.Date("2020-06-01"), y = 64, label = "2020",
+           size = 12, color = "dark blue") +
+  annotate("text", x = as.Date("2021-07-01"), y = 64, label = "2021",
+           size = 12, color = "dark blue") +
+  annotate("text", x = as.Date("2022-07-01"), y = 64, label = "2022",
+           size = 12, color = "dark blue")
+
+ggsave('figure_vii_2A.svg', figure_vii_2A, device = "svg",
+       width = 465, height = 225, units = 'mm',
+       dpi = 1080)
+
+# 2B. Line graph - Monthly Percentage of New Cases with Pretrial Release for Felony Cases, by Type of Release
+library(ggplot2)
+library(ggthemes)
+dev.off()
+theme_set(theme_classic())
+figure_vii_2B <- ggplot(Figure_VII_2B, aes(x = Date, y = Percent, color = Release_Type)) +
+  geom_line(lwd=1.5) +
+  # theme_economist_white() + scale_fill_economist() +
+  theme(
+    title = element_text(face="bold", size=18, color="black"),
+    axis.ticks.x=element_blank(),
+    axis.ticks.y=element_blank(),
+    ## panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+    axis.text.x = element_text(angle = 90
+                               #, vjust = 1
+    ),
+    axis.text.y = element_text(size = 18, color = "black"),
+    axis.text = element_text(size = 18, color = "black"),
+    # axis.title = element_text(face="bold", hjust = 0.5, size = 18, color = "black")
+    # axis.title = element_blank(),
+    axis.title.x = element_blank(),
+    legend.title = element_blank(),
+    legend.text = element_text(face="bold", size = 18, color = "black"),
+    legend.position = "bottom"
+  ) +
+  scale_x_date(date_breaks = '3 month'
+               , date_labels = "%b-%y", #%b formats the date into lettered-month abbreviation format
+  ) +
+  scale_y_continuous(labels=function(x) format(x, big.mark = ",", decimal.mark = ".", scientific = FALSE)) +
+  geom_vline(xintercept = as.numeric(as.Date("2021-01-01")), 
+             linetype=4,
+             col = "dark blue") +
+  geom_vline(xintercept = as.numeric(as.Date("2022-01-01")), 
+             linetype=4,
+             col = "dark blue") +
+  annotate("text", x = as.Date("2020-06-01"), y = 64, label = "2020",
+           size = 12, color = "dark blue") +
+  annotate("text", x = as.Date("2021-07-01"), y = 64, label = "2021",
+           size = 12, color = "dark blue") +
+  annotate("text", x = as.Date("2022-07-01"), y = 64, label = "2022",
+           size = 12, color = "dark blue")
+
+ggsave('figure_vii_2B.svg', figure_vii_2B, device = "svg",
+       width = 465, height = 225, units = 'mm',
+       dpi = 1080)
+
+# 3. Figure VII-3: Monthly FTA rates by type of release in LA County
+# Import file
+library(readxl)
+Monthly_FTA_by_Type <- read_excel("FTA_RATE_BY_RELEASETYPE_BYMTH.xlsx")
+
+# Filter file for appropriate date range to be shown - from 2018 until March 2022
+Monthly_FTA_by_Type <-
+  dplyr::filter(Monthly_FTA_by_Type,
+                (Monthly_FTA_by_Type$YEAR_FTA >= 2020 &
+                   Monthly_FTA_by_Type$YEAR_FTA <= 2022)
+                #|
+                #  (Monthly_FTA_by_Type$YEAR_FTA == 2023 &
+                #     Monthly_FTA_by_Type$MTH_FTA <= 4)
+                #|
+                #  (Monthly_FTA_by_Type$YEAR_FTA == 2019 &
+                #     Monthly_FTA_by_Type$MTH_FTA >= 4)
+                  
+  )
+
+# Merge separate month and year columns into date-valued column, convert correctly to date values
+Monthly_FTA_by_Type$Date <-
+  as.Date(paste(Monthly_FTA_by_Type$YEAR_FTA
+                , Monthly_FTA_by_Type$MTH_FTA
+                , 01)
+          , "%Y %m %d")
+
+# Gather data into long form before using graph.
+library(tidyverse)
+Figure_VII_3A <- Monthly_FTA_by_Type %>%
+  select(Date, FTA_Cite_m_Percent, FTA_OR_m_Percent, FTA_Bond_m_Percent) %>%
+  gather(key = "Release_Type", value = "Percent", -Date)
+
+Figure_VII_3B <- Monthly_FTA_by_Type %>%
+  select(Date, FTA_Cite_f_Percent, FTA_OR_f_Percent, FTA_Bond_f_Percent) %>%
+  gather(key = "Release_Type", value = "Percent", -Date)
+
+# Modify row names for display.
+Figure_VII_3A <- dplyr::mutate(Figure_VII_3A, Release_Type = case_when(
+  Release_Type == "FTA_Cite_m_Percent" ~ "Cite",
+  Release_Type == "FTA_OR_m_Percent" ~ "Own Recognizance",
+  Release_Type == "FTA_Bond_m_Percent" ~ "Bail/bond",
+  TRUE ~ Release_Type
+  )
+)
+
+Figure_VII_3B <- dplyr::mutate(Figure_VII_3B, Release_Type = case_when(
+  Release_Type == "FTA_Cite_f_Percent" ~ "Cite",
+  Release_Type == "FTA_OR_f_Percent" ~ "Own Recognizance",
+  Release_Type == "FTA_Bond_f_Percent" ~ "Bail/bond",
+  TRUE ~ Release_Type
+  )
+)
+
+# 3A. Line graph - Monthly FTA Rates for Active Released Misdemeanor Cases, by Type of Pretrial Release
+library(ggplot2)
+library(ggthemes)
+dev.off()
+theme_set(theme_classic())
+figure_vii_3A <- ggplot(Figure_VII_3A, aes(x = Date, y = Percent, color = Release_Type)) +
+  geom_line(lwd=1.5) +
+  # theme_economist_white() + scale_fill_economist() +
+  theme(
+    title = element_text(face="bold", size=18, color="black"),
+    axis.ticks.x=element_blank(),
+    axis.ticks.y=element_blank(),
+    ## panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+    axis.text.x = element_text(angle = 90
+                               #, vjust = 1
+    ),
+    axis.text.y = element_text(size = 14, color = "black"),
+    axis.text = element_text(size = 14, color = "black"),
+    # axis.title = element_text(face="bold", hjust = 0.5, size = 18, color = "black")
+    # axis.title = element_blank(),
+    axis.title.x = element_blank(),
+    legend.title = element_blank(),
+    legend.text = element_text(face="bold", size = 14, color = "black"),
+    legend.position = "bottom"
+  ) +
+  scale_x_date(date_breaks = '3 month'
+               , date_labels = "%b-%y", #%b formats the date into lettered-month abbreviation format
+  ) +
+  scale_y_continuous(labels=function(x) format(x, big.mark = ",", decimal.mark = ".", scientific = FALSE)) +
+  #ylab("Percent") +
+  geom_vline(xintercept = as.numeric(as.Date("2021-01-01")), 
+             linetype=4,
+             col = "dark blue") +
+  geom_vline(xintercept = as.numeric(as.Date("2022-01-01")), 
+             linetype=4,
+             col = "dark blue") +
+  annotate("text", x = as.Date("2020-06-01"), y = 64, label = "2020",
+           size = 6, color = "dark blue") +
+  annotate("text", x = as.Date("2021-07-01"), y = 64, label = "2021",
+           size = 6, color = "dark blue") +
+  annotate("text", x = as.Date("2022-07-01"), y = 64, label = "2022",
+           size = 6, color = "dark blue")
+
+ggsave('figure_vii_3A.svg', figure_vii_3A, device = "svg",
+       width = 465, height = 225, units = 'mm',
+       dpi = 1080)
+
+# 3B. Line graph - Monthly FTA Rates for Active Released Felony Cases, by Type of Pretrial Release
+library(ggplot2)
+library(ggthemes)
+dev.off()
+theme_set(theme_classic())
+figure_vii_3B <- ggplot(Figure_VII_3B, aes(x = Date, y = Percent, color = Release_Type)) +
+  geom_line(lwd=1.5) +
+  # theme_economist_white() + scale_fill_economist() +
+  theme(
+    title = element_text(face="bold", size=18, color="black"),
+    axis.ticks.x=element_blank(),
+    axis.ticks.y=element_blank(),
+    ## panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+    axis.text.x = element_text(angle = 90
+                               #, vjust = 1
+    ),
+    axis.text.y = element_text(size = 14, color = "black"),
+    axis.text = element_text(size = 14, color = "black"),
+    # axis.title = element_text(face="bold", hjust = 0.5, size = 18, color = "black")
+    # axis.title = element_blank(),
+    axis.title.x = element_blank(),
+    legend.title = element_blank(),
+    legend.text = element_text(face="bold", size = 14, color = "black"),
+    legend.position = "bottom"
+  ) +
+  scale_x_date(date_breaks = '3 month'
+               , date_labels = "%b-%y", #%b formats the date into lettered-month abbreviation format
+  ) +
+  scale_y_continuous(labels=function(x) format(x, big.mark = ",", decimal.mark = ".", scientific = FALSE)) +
+  #ylab("Percent") +
+  geom_vline(xintercept = as.numeric(as.Date("2021-01-01")), 
+             linetype=4,
+             col = "dark blue") +
+  geom_vline(xintercept = as.numeric(as.Date("2022-01-01")), 
+             linetype=4,
+             col = "dark blue") +
+  annotate("text", x = as.Date("2020-06-01"), y = 64, label = "2020",
+           size = 6, color = "dark blue") +
+  annotate("text", x = as.Date("2021-07-01"), y = 64, label = "2021",
+           size = 6, color = "dark blue") +
+  annotate("text", x = as.Date("2022-07-01"), y = 64, label = "2022",
+           size = 6, color = "dark blue")
+
+ggsave('figure_vii_3B.svg', figure_vii_3B, device = "svg",
+       width = 465, height = 225, units = 'mm',
+       dpi = 1080)
+
+# 4. Figure VII-4: Monthly re-arrest for new offense rates by type of release in LA County
+# Import file
+library(readxl)
+Monthly_Rearrest_by_Type <- read_excel("REARREST_RATE_BY_RELEASE_BYMTH.xlsx")
+
+# Filter file for appropriate date range to be shown - from 2018 until March 2022
+Monthly_Rearrest_by_Type <-
+  dplyr::filter(Monthly_Rearrest_by_Type,
+                (Monthly_Rearrest_by_Type$YEAR_REARREST >= 2020 &
+                   Monthly_Rearrest_by_Type$YEAR_REARREST <= 2022)
+                #|
+                #  (Monthly_Rearrest_by_Type$YEAR_REARREST == 2023 &
+                #     Monthly_Rearrest_by_Type$MTH_REARREST <= 4)
+                #|
+                #  (Monthly_Rearrest_by_Type$YEAR_REARREST == 2019 &
+                #     Monthly_Rearrest_by_Type$MTH_REARREST >= 4)
+                  
+  )
+
+# Merge separate month and year columns into date-valued column, convert correctly to date values
+Monthly_Rearrest_by_Type$Date <-
+  as.Date(paste(Monthly_Rearrest_by_Type$YEAR_REARREST
+                , Monthly_Rearrest_by_Type$MTH_REARREST
+                , 01)
+          , "%Y %m %d")
+
+# Gather data into long form before using graph.
+library(tidyverse)
+Figure_VII_4A <- Monthly_Rearrest_by_Type %>%
+  select(Date, REARREST_Cite_m_Percent, REARREST_OR_m_Percent, REARREST_Bond_m_Percent) %>%
+  gather(key = "Release_Type", value = "Percent", -Date)
+
+Figure_VII_4B <- Monthly_Rearrest_by_Type %>%
+  select(Date, REARREST_Cite_f_Percent, REARREST_OR_f_Percent, REARREST_Bond_f_Percent) %>%
+  gather(key = "Release_Type", value = "Percent", -Date)
+
+# Modify row names for display.
+Figure_VII_4A <- dplyr::mutate(Figure_VII_4A, Release_Type = case_when(
+  Release_Type == "REARREST_Cite_m_Percent" ~ "Cite",
+  Release_Type == "REARREST_OR_m_Percent" ~ "Own Recognizance",
+  Release_Type == "REARREST_Bond_m_Percent" ~ "Bail/bond",
+  TRUE ~ Release_Type
+  )
+)
+
+Figure_VII_4B <- dplyr::mutate(Figure_VII_4B, Release_Type = case_when(
+  Release_Type == "REARREST_Cite_f_Percent" ~ "Cite",
+  Release_Type == "REARREST_OR_f_Percent" ~ "Own Recognizance",
+  Release_Type == "REARREST_Bond_f_Percent" ~ "Bail/bond",
+  TRUE ~ Release_Type
+  )
+)
+
+# 4A. Line graph - Monthly Re-arrest for New Offense Rates for Active Released Misdemeanor Cases, by Release Type
+library(ggplot2)
+library(ggthemes)
+dev.off()
+theme_set(theme_classic())
+figure_vii_4A <- ggplot(Figure_VII_4A, aes(x = Date, y = Percent, color = Release_Type)) +
+  geom_line(lwd=1.5) +
+  # theme_economist_white() + scale_fill_economist() +
+  theme(
+    title = element_text(face="bold", size=18, color="black"),
+    axis.ticks.x=element_blank(),
+    axis.ticks.y=element_blank(),
+    ## panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+    axis.text.x = element_text(angle = 90
+                               #, vjust = 1
+    ),
+    axis.text.y = element_text(size = 14, color = "black"),
+    axis.text = element_text(size = 14, color = "black"),
+    # axis.title = element_text(face="bold", hjust = 0.5, size = 18, color = "black")
+    # axis.title = element_blank(),
+    axis.title.x = element_blank(),
+    legend.title = element_blank(),
+    legend.text = element_text(face="bold", size = 14, color = "black"),
+    legend.position = "bottom"
+  ) +
+  scale_x_date(date_breaks = '3 month'
+               , date_labels = "%b-%y", #%b formats the date into lettered-month abbreviation format
+  ) +
+  scale_y_continuous(labels=function(x) format(x, big.mark = ",", decimal.mark = ".", scientific = FALSE)) +
+  #ylab("Percent") +
+  geom_vline(xintercept = as.numeric(as.Date("2021-01-01")), 
+             linetype=4,
+             col = "dark blue") +
+  geom_vline(xintercept = as.numeric(as.Date("2022-01-01")), 
+             linetype=4,
+             col = "dark blue") +
+  annotate("text", x = as.Date("2020-06-01"), y = 64, label = "2020",
+           size = 6, color = "dark blue") +
+  annotate("text", x = as.Date("2021-07-01"), y = 64, label = "2021",
+           size = 6, color = "dark blue") +
+  annotate("text", x = as.Date("2022-07-01"), y = 64, label = "2022",
+           size = 6, color = "dark blue")
+
+ggsave('figure_vii_4A.svg', figure_vii_4A, device = "svg",
+       width = 465, height = 225, units = 'mm',
+       dpi = 1080)
+
+# 4B. Line graph - Monthly Re-arrest for New Offense Rates for Active Released Felony Cases, by Release Type
+library(ggplot2)
+library(ggthemes)
+dev.off()
+theme_set(theme_classic())
+figure_vii_4B <- ggplot(Figure_VII_4B, aes(x = Date, y = Percent, color = Release_Type)) +
+  geom_line(lwd=1.5) +
+  # theme_economist_white() + scale_fill_economist() +
+  theme(
+    title = element_text(face="bold", size=18, color="black"),
+    axis.ticks.x=element_blank(),
+    axis.ticks.y=element_blank(),
+    ## panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+    axis.text.x = element_text(angle = 90
+                               #, vjust = 1
+    ),
+    axis.text.y = element_text(size = 14, color = "black"),
+    axis.text = element_text(size = 14, color = "black"),
+    # axis.title = element_text(face="bold", hjust = 0.5, size = 18, color = "black")
+    # axis.title = element_blank(),
+    axis.title.x = element_blank(),
+    legend.title = element_blank(),
+    legend.text = element_text(face="bold", size = 14, color = "black"),
+    legend.position = "bottom"
+  ) +
+  scale_x_date(date_breaks = '3 month'
+               , date_labels = "%b-%y", #%b formats the date into lettered-month abbreviation format
+  ) +
+  scale_y_continuous(labels=function(x) format(x, big.mark = ",", decimal.mark = ".", scientific = FALSE)) +
+  #ylab("Percent") +
+  geom_vline(xintercept = as.numeric(as.Date("2021-01-01")), 
+             linetype=4,
+             col = "dark blue") +
+  geom_vline(xintercept = as.numeric(as.Date("2022-01-01")), 
+             linetype=4,
+             col = "dark blue") +
+  annotate("text", x = as.Date("2020-06-01"), y = 64, label = "2020",
+           size = 6, color = "dark blue") +
+  annotate("text", x = as.Date("2021-07-01"), y = 64, label = "2021",
+           size = 6, color = "dark blue") +
+  annotate("text", x = as.Date("2022-07-01"), y = 64, label = "2022",
+           size = 6, color = "dark blue")
+
+ggsave('figure_vii_4B.svg', figure_vii_4B, device = "svg",
+       width = 465, height = 225, units = 'mm',
+       dpi = 1080)
