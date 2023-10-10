@@ -1,2 +1,2 @@
-# pretrial_visualizations_and_tables
-Visualizations and Tables for the Pretrial Working Group Meetings
+# Pretrial Visualizations and Tables
+Visualizations and tables prepared historically for the Pretrial Working Group meetings.
